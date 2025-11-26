@@ -9,6 +9,9 @@ import { StatsOverview } from './StatsOverview';
 import { MonthlyPnLChart } from './MonthlyPnLChart';
 import { EquityCurve } from './EquityCurve';
 import { TVChart } from './TVChart';
+import { TraderRolePlay } from './TraderRolePlay';
+import { AIPrediction } from './AIPrediction';
+import { TraderProfile } from './TraderProfile';
 import {
     Loader2,
     ChevronLeft,
@@ -16,12 +19,26 @@ import {
     LayoutList,
     History,
     BarChart3,
-    LineChart,
     TrendingUp,
-    Activity
+    Activity,
+    Brain,
+    Gamepad2,
+    User,
+    Settings,
+    Key,
+    X,
+    Check,
+    Sparkles
 } from 'lucide-react';
 
-type ViewMode = 'overview' | 'positions' | 'trades';
+type ViewMode = 'overview' | 'positions' | 'trades' | 'roleplay' | 'prediction' | 'profile';
+
+interface APIConfig {
+    exchange: string;
+    apiKey: string;
+    apiSecret: string;
+    symbol: string;
+}
 
 export function Dashboard() {
     const [trades, setTrades] = useState<Trade[]>([]);
@@ -36,16 +53,25 @@ export function Dashboard() {
     const [selectedSymbol, setSelectedSymbol] = useState('BTCUSD');
     const [timeframe, setTimeframe] = useState<string>('1d');
     const [viewMode, setViewMode] = useState<ViewMode>('overview');
-    const [allTrades, setAllTrades] = useState<Trade[]>([]); // All trades for markers
+    const [allTrades, setAllTrades] = useState<Trade[]>([]);
     const [selectedSession, setSelectedSession] = useState<PositionSession | null>(null);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
+    const [showApiConfig, setShowApiConfig] = useState(false);
+    const [apiConfig, setApiConfig] = useState<APIConfig>({
+        exchange: 'bitmex',
+        apiKey: '',
+        apiSecret: '',
+        symbol: 'BTC/USD'
+    });
+    const [isConnected, setIsConnected] = useState(false);
+    const [traderProfileData, setTraderProfileData] = useState<any>(null);
     const limit = 20;
 
     // Helper function to align time to timeframe bucket
     const alignToTimeframe = (timestamp: number, tf: string): number => {
         const date = new Date(timestamp * 1000);
-        
+
         switch (tf) {
             case '1m':
                 date.setSeconds(0, 0);
@@ -75,20 +101,18 @@ export function Dashboard() {
                 date.setHours(0, 0, 0, 0);
                 break;
         }
-        
+
         return Math.floor(date.getTime() / 1000);
     };
 
     // Generate chart markers from trades or selected session
     const chartMarkers = useMemo(() => {
-        // Use session trades if a session is selected, otherwise use all trades
         const tradesToMark = selectedSession ? selectedSession.trades : allTrades;
-        
+
         if (!tradesToMark || tradesToMark.length === 0 || chartData.candles.length === 0) {
             return [];
         }
 
-        // Get the visible chart time range (avoid spread operator for large arrays)
         let minTime = Infinity;
         let maxTime = -Infinity;
         for (const candle of chartData.candles) {
@@ -96,24 +120,22 @@ export function Dashboard() {
             if (candle.time > maxTime) maxTime = candle.time;
         }
 
-        // Group trades by timeframe bucket and aggregate
         const bucketMap = new Map<string, { buys: number; sells: number; buyQty: number; sellQty: number; avgBuyPrice: number; avgSellPrice: number }>();
-        
+
         tradesToMark.forEach(trade => {
             const tradeTime = Math.floor(new Date(trade.datetime).getTime() / 1000);
-            
-            // Skip trades outside the visible range
+
             if (tradeTime < minTime || tradeTime > maxTime) {
                 return;
             }
-            
+
             const bucketTime = alignToTimeframe(tradeTime, timeframe);
             const key = `${bucketTime}-${trade.side}`;
-            
+
             if (!bucketMap.has(key)) {
                 bucketMap.set(key, { buys: 0, sells: 0, buyQty: 0, sellQty: 0, avgBuyPrice: 0, avgSellPrice: 0 });
             }
-            
+
             const bucket = bucketMap.get(key)!;
             if (trade.side === 'buy') {
                 bucket.buyQty += trade.amount;
@@ -126,19 +148,16 @@ export function Dashboard() {
             }
         });
 
-        // Create sorted array of candle times for binary search
         const sortedCandleTimes = chartData.candles.map(c => c.time).sort((a, b) => a - b);
         const candleTimeSet = new Set(sortedCandleTimes);
-        
-        // Binary search to find closest candle time
+
         const findClosestCandleTime = (time: number): number | null => {
             if (candleTimeSet.has(time)) return time;
             if (sortedCandleTimes.length === 0) return null;
-            
-            // Binary search for insertion point
+
             let left = 0;
             let right = sortedCandleTimes.length - 1;
-            
+
             while (left < right) {
                 const mid = Math.floor((left + right) / 2);
                 if (sortedCandleTimes[mid] < time) {
@@ -147,18 +166,16 @@ export function Dashboard() {
                     right = mid;
                 }
             }
-            
-            // Check closest between left and left-1
+
             const timeframeSeconds: Record<string, number> = {
                 '1m': 60, '5m': 300, '15m': 900, '30m': 1800,
                 '1h': 3600, '4h': 14400, '1d': 86400, '1w': 604800,
             };
             const window = timeframeSeconds[timeframe] || 3600;
-            
+
             let closest: number | null = null;
             let minDiff = Infinity;
-            
-            // Check the found index and one before
+
             for (const idx of [left - 1, left, left + 1]) {
                 if (idx >= 0 && idx < sortedCandleTimes.length) {
                     const diff = Math.abs(sortedCandleTimes[idx] - time);
@@ -168,20 +185,18 @@ export function Dashboard() {
                     }
                 }
             }
-            
+
             return closest;
         };
 
-        // Generate markers
         const markers: any[] = [];
         bucketMap.forEach((bucket, key) => {
             const [timeStr, side] = key.split('-');
             const rawTime = parseInt(timeStr);
-            
-            // Find the closest matching candle time
+
             const time = findClosestCandleTime(rawTime);
             if (time === null) return;
-            
+
             if (side === 'buy' && bucket.buys > 0) {
                 markers.push({
                     time,
@@ -202,7 +217,6 @@ export function Dashboard() {
             }
         });
 
-        // Sort by time
         return markers.sort((a, b) => a.time - b.time);
     }, [selectedSession, allTrades, timeframe, chartData.candles]);
 
@@ -237,11 +251,10 @@ export function Dashboard() {
         loadEquity();
     }, []);
 
-    // Load all trades for markers (once per symbol)
+    // Load all trades for markers
     useEffect(() => {
         async function loadAllTrades() {
             try {
-                // Fetch all trades for this symbol (for markers)
                 const res = await fetch(`/api/trades?symbol=${encodeURIComponent(selectedSymbol)}&limit=10000`);
                 if (!res.ok) throw new Error('Failed to fetch trades');
                 const data = await res.json();
@@ -256,37 +269,34 @@ export function Dashboard() {
     // Calculate visible range for chart when a session is selected
     const selectedSessionRange = useMemo(() => {
         if (!selectedSession) return null;
-        
+
         const sessionStart = Math.floor(new Date(selectedSession.openTime).getTime() / 1000);
-        const sessionEnd = selectedSession.closeTime 
+        const sessionEnd = selectedSession.closeTime
             ? Math.floor(new Date(selectedSession.closeTime).getTime() / 1000)
-            : Math.floor(Date.now() / 1000); // Use current time for open positions
+            : Math.floor(Date.now() / 1000);
         const sessionDuration = sessionEnd - sessionStart;
-        
-        // Add padding based on timeframe
+
         const paddingMultiplier: Record<string, number> = {
             '1m': 0.3, '5m': 0.5, '15m': 1, '30m': 2,
             '1h': 3, '4h': 5, '1d': 10, '1w': 20,
         };
-        const padding = Math.max(sessionDuration * (paddingMultiplier[timeframe] || 1), 3600 * 6); // At least 6 hours padding
-        
+        const padding = Math.max(sessionDuration * (paddingMultiplier[timeframe] || 1), 3600 * 6);
+
         return {
             from: sessionStart - padding,
             to: sessionEnd + padding,
         };
     }, [selectedSession, timeframe]);
 
-    // Load Real OHLCV Chart Data from local files (load ALL data)
+    // Load Real OHLCV Chart Data
     useEffect(() => {
         async function loadChartData() {
             setChartLoading(true);
             try {
-                // Load all data without time range filter
                 const url = `/api/ohlcv?symbol=${encodeURIComponent(selectedSymbol)}&timeframe=${timeframe}`;
                 const res = await fetch(url);
                 if (!res.ok) throw new Error('Failed to fetch OHLCV data');
                 const data = await res.json();
-                console.log(`Loaded ${data.candles?.length || 0} candles for ${selectedSymbol} ${timeframe}`);
                 setChartData({ candles: data.candles || [], markers: [] });
             } catch (err) {
                 console.error('Error loading OHLCV:', err);
@@ -301,7 +311,7 @@ export function Dashboard() {
     // Load Table Data (Paginated)
     useEffect(() => {
         async function loadData() {
-            if (viewMode === 'overview') {
+            if (viewMode === 'overview' || viewMode === 'roleplay' || viewMode === 'prediction' || viewMode === 'profile') {
                 setLoading(false);
                 return;
             }
@@ -334,7 +344,7 @@ export function Dashboard() {
         setSelectedSession(null);
     }, [viewMode, selectedSymbol]);
 
-    // Handler to select a session and fetch full trade details
+    // Handler to select a session
     const handleSelectSession = async (session: PositionSession) => {
         try {
             const res = await fetch(`/api/trades?sessionId=${encodeURIComponent(session.id)}`);
@@ -344,6 +354,27 @@ export function Dashboard() {
         } catch (err) {
             console.error('Error fetching session:', err);
             setSelectedSession(session);
+        }
+    };
+
+    // Test API connection
+    const testConnection = async () => {
+        try {
+            const res = await fetch('/api/backend/test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    api_key: apiConfig.apiKey,
+                    api_secret: apiConfig.apiSecret,
+                    exchange: apiConfig.exchange
+                })
+            });
+            if (res.ok) {
+                setIsConnected(true);
+                setShowApiConfig(false);
+            }
+        } catch (err) {
+            console.error('Connection test failed:', err);
         }
     };
 
@@ -370,44 +401,27 @@ export function Dashboard() {
                 {/* Header */}
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-6 border-b border-border">
                     <div>
-                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
-                            BitMEX Analytics
+                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-white via-blue-200 to-purple-200 bg-clip-text text-transparent">
+                            交易员扮演法分析器
                         </h1>
-                        <p className="text-muted-foreground mt-1 font-medium">
-                            {account?.user?.username ? `@${account.user.username}` : 'Portfolio'} • 2020-05-01 to Present
+                        <p className="text-muted-foreground mt-1 font-medium flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-yellow-500" />
+                            通过扮演优秀交易员来学习交易策略
                         </p>
                     </div>
                     <div className="flex items-center gap-4 flex-wrap">
-                        {/* View Mode Tabs */}
-                        <div className="flex bg-secondary/30 backdrop-blur-sm rounded-xl p-1 border border-white/5">
-                            <button
-                                onClick={() => { setViewMode('overview'); setPage(1); }}
-                                className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${viewMode === 'overview'
-                                        ? 'bg-primary/10 text-primary shadow-[0_0_10px_rgba(59,130,246,0.2)] ring-1 ring-primary/20'
-                                        : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
-                                    }`}
-                            >
-                                <BarChart3 size={16} className="mr-2" /> Overview
-                            </button>
-                            <button
-                                onClick={() => { setViewMode('positions'); setPage(1); }}
-                                className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${viewMode === 'positions'
-                                        ? 'bg-primary/10 text-primary shadow-[0_0_10px_rgba(59,130,246,0.2)] ring-1 ring-primary/20'
-                                        : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
-                                    }`}
-                            >
-                                <History size={16} className="mr-2" /> Positions
-                            </button>
-                            <button
-                                onClick={() => { setViewMode('trades'); setPage(1); }}
-                                className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${viewMode === 'trades'
-                                        ? 'bg-primary/10 text-primary shadow-[0_0_10px_rgba(59,130,246,0.2)] ring-1 ring-primary/20'
-                                        : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
-                                    }`}
-                            >
-                                <LayoutList size={16} className="mr-2" /> Trades
-                            </button>
-                        </div>
+                        {/* API Config Button */}
+                        <button
+                            onClick={() => setShowApiConfig(!showApiConfig)}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
+                                isConnected
+                                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                                    : 'bg-secondary/30 text-muted-foreground hover:text-foreground border border-white/5'
+                            }`}
+                        >
+                            {isConnected ? <Check className="w-4 h-4" /> : <Key className="w-4 h-4" />}
+                            {isConnected ? 'API已连接' : '配置API'}
+                        </button>
 
                         {/* Symbol Selector */}
                         <div className="relative">
@@ -428,6 +442,134 @@ export function Dashboard() {
                         </div>
                     </div>
                 </header>
+
+                {/* API Config Modal */}
+                {showApiConfig && (
+                    <div className="glass rounded-xl p-6 border border-primary/20">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold flex items-center gap-2">
+                                <Settings className="w-5 h-5 text-primary" />
+                                API 配置
+                            </h3>
+                            <button onClick={() => setShowApiConfig(false)} className="p-1 hover:bg-white/10 rounded">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm text-muted-foreground mb-1">交易所</label>
+                                <select
+                                    value={apiConfig.exchange}
+                                    onChange={(e) => setApiConfig({ ...apiConfig, exchange: e.target.value })}
+                                    className="w-full px-4 py-2 bg-secondary/30 border border-white/10 rounded-lg"
+                                >
+                                    <option value="bitmex">Bitmex</option>
+                                    <option value="hyperliquid" disabled>HyperLiquid (即将支持)</option>
+                                    <option value="binance" disabled>币安 (即将支持)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm text-muted-foreground mb-1">交易对</label>
+                                <input
+                                    type="text"
+                                    value={apiConfig.symbol}
+                                    onChange={(e) => setApiConfig({ ...apiConfig, symbol: e.target.value })}
+                                    className="w-full px-4 py-2 bg-secondary/30 border border-white/10 rounded-lg"
+                                    placeholder="BTC/USD"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm text-muted-foreground mb-1">API Key (只读)</label>
+                                <input
+                                    type="text"
+                                    value={apiConfig.apiKey}
+                                    onChange={(e) => setApiConfig({ ...apiConfig, apiKey: e.target.value })}
+                                    className="w-full px-4 py-2 bg-secondary/30 border border-white/10 rounded-lg"
+                                    placeholder="输入只读API Key"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm text-muted-foreground mb-1">API Secret</label>
+                                <input
+                                    type="password"
+                                    value={apiConfig.apiSecret}
+                                    onChange={(e) => setApiConfig({ ...apiConfig, apiSecret: e.target.value })}
+                                    className="w-full px-4 py-2 bg-secondary/30 border border-white/10 rounded-lg"
+                                    placeholder="输入API Secret"
+                                />
+                            </div>
+                        </div>
+                        <div className="mt-4 flex gap-3">
+                            <button
+                                onClick={testConnection}
+                                className="px-6 py-2 bg-primary/20 text-primary hover:bg-primary/30 rounded-lg transition-colors"
+                            >
+                                测试连接
+                            </button>
+                            <p className="text-sm text-muted-foreground flex items-center">
+                                仅使用只读API，无法进行交易操作
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Navigation Tabs */}
+                <div className="flex bg-secondary/30 backdrop-blur-sm rounded-xl p-1 border border-white/5 overflow-x-auto">
+                    <button
+                        onClick={() => { setViewMode('overview'); setPage(1); }}
+                        className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${viewMode === 'overview'
+                            ? 'bg-primary/10 text-primary shadow-[0_0_10px_rgba(59,130,246,0.2)] ring-1 ring-primary/20'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                        }`}
+                    >
+                        <BarChart3 size={16} className="mr-2" /> 数据概览
+                    </button>
+                    <button
+                        onClick={() => { setViewMode('roleplay'); setPage(1); }}
+                        className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${viewMode === 'roleplay'
+                            ? 'bg-purple-500/10 text-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.2)] ring-1 ring-purple-500/20'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                        }`}
+                    >
+                        <Gamepad2 size={16} className="mr-2" /> 扮演学习
+                    </button>
+                    <button
+                        onClick={() => { setViewMode('prediction'); setPage(1); }}
+                        className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${viewMode === 'prediction'
+                            ? 'bg-cyan-500/10 text-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.2)] ring-1 ring-cyan-500/20'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                        }`}
+                    >
+                        <Brain size={16} className="mr-2" /> AI预测
+                    </button>
+                    <button
+                        onClick={() => { setViewMode('profile'); setPage(1); }}
+                        className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${viewMode === 'profile'
+                            ? 'bg-yellow-500/10 text-yellow-400 shadow-[0_0_10px_rgba(234,179,8,0.2)] ring-1 ring-yellow-500/20'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                        }`}
+                    >
+                        <User size={16} className="mr-2" /> 交易员画像
+                    </button>
+                    <button
+                        onClick={() => { setViewMode('positions'); setPage(1); }}
+                        className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${viewMode === 'positions'
+                            ? 'bg-primary/10 text-primary shadow-[0_0_10px_rgba(59,130,246,0.2)] ring-1 ring-primary/20'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                        }`}
+                    >
+                        <History size={16} className="mr-2" /> 仓位历史
+                    </button>
+                    <button
+                        onClick={() => { setViewMode('trades'); setPage(1); }}
+                        className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${viewMode === 'trades'
+                            ? 'bg-primary/10 text-primary shadow-[0_0_10px_rgba(59,130,246,0.2)] ring-1 ring-primary/20'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                        }`}
+                    >
+                        <LayoutList size={16} className="mr-2" /> 交易记录
+                    </button>
+                </div>
 
                 {/* Overview Mode */}
                 {viewMode === 'overview' && stats && (
@@ -464,9 +606,9 @@ export function Dashboard() {
                                             key={tf}
                                             onClick={() => setTimeframe(tf)}
                                             className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all whitespace-nowrap ${timeframe === tf
-                                                    ? 'bg-primary/10 text-primary shadow-sm'
-                                                    : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
-                                                }`}
+                                                ? 'bg-primary/10 text-primary shadow-sm'
+                                                : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                                            }`}
                                         >
                                             {tf.toUpperCase()}
                                         </button>
@@ -478,8 +620,37 @@ export function Dashboard() {
                     </div>
                 )}
 
+                {/* Role Play Mode - 独家功能 */}
+                {viewMode === 'roleplay' && (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <TraderRolePlay sessions={sessions} />
+                    </div>
+                )}
+
+                {/* AI Prediction Mode - 独家功能 */}
+                {viewMode === 'prediction' && (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <AIPrediction
+                            apiEndpoint="/api/backend/predict"
+                            credentials={{
+                                api_key: apiConfig.apiKey,
+                                api_secret: apiConfig.apiSecret,
+                                exchange: apiConfig.exchange
+                            }}
+                            symbol={apiConfig.symbol}
+                        />
+                    </div>
+                )}
+
+                {/* Trader Profile Mode - 独家功能 */}
+                {viewMode === 'profile' && (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <TraderProfile data={traderProfileData} />
+                    </div>
+                )}
+
                 {/* Positions/Trades Mode */}
-                {viewMode !== 'overview' && (
+                {(viewMode === 'positions' || viewMode === 'trades') && (
                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         {/* Chart Section */}
                         <section className="glass rounded-xl p-6">
@@ -506,9 +677,9 @@ export function Dashboard() {
                                             key={tf}
                                             onClick={() => setTimeframe(tf)}
                                             className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all whitespace-nowrap ${timeframe === tf
-                                                    ? 'bg-primary/10 text-primary shadow-sm'
-                                                    : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
-                                                }`}
+                                                ? 'bg-primary/10 text-primary shadow-sm'
+                                                : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                                            }`}
                                         >
                                             {tf.toUpperCase()}
                                         </button>

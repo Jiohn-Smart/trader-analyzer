@@ -1,274 +1,152 @@
-# 交易員 paulwei CEX 實盤紀錄平台
+# 交易员扮演法分析器 (Trader Role-Play Analyzer)
 
 ![Next.js](https://img.shields.io/badge/Next.js-16.0-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss)
 
-一個專門用於追蹤和分析 BitMEX 交易員實盤表現的數據分析平台。透過視覺化的圖表和詳細的統計數據，深入了解交易策略和倉位管理。
+通过扮演优秀交易员来学习交易策略的智能分析平台。
 
-## ✨ 功能特色
+## 独家功能
 
-- 📊 **多時間週期 K 線圖** - 支援 1m、5m、15m、30m、1h、4h、1d、1w 多種時間週期
-- 📈 **倉位歷史分析** - 完整追蹤每一個倉位從開倉到平倉的過程
-- 💰 **損益統計** - 月度 PnL、勝率、盈虧比等關鍵指標
-- 📉 **權益曲線** - 視覺化資金變化趨勢
-- 🎯 **交易標記** - 在 K 線圖上標記所有買賣點位
-- 🔍 **倉位詳情** - 點擊倉位即可查看該倉位所有交易細節
+### 1. 扮演学习模式 (Role-Play Learning)
+- 在不知道交易员操作的情况下，根据市场情境猜测交易员的下一步
+- 实时评分系统，记录你的判断准确率
+- 提供交易员思路提示，帮助理解决策逻辑
+- 自动播放模式，可调节播放速度
 
-## 📸 截圖預覽
+### 2. AI 操作预测
+- 基于交易员历史模式的智能预测
+- 展示相似历史情况及其结果
+- 模式统计分析，包括操作分布和平均盈亏
+- 预测置信度和详细理由
 
-![Platform Preview](paulwei_realplatform.gif)
+### 3. 交易员画像分析
+- 风险偏好评估（激进/稳健/保守）
+- 交易频率类型（超短线/日内/波段/趋势）
+- 交易纪律和耐心评分
+- 适合学习人群匹配
+- 核心优势和待改进点
 
-## ⚠️ 重要說明：數據檔案
+### 4. 完整数据可视化
+- 📊 多周期K线图 (1m ~ 1w)
+- 🎯 交易标记在图表上实时展示
+- 📈 仓位历史追踪
+- 💰 权益曲线和月度PnL分析
 
-> **本專案不包含交易數據檔案！** 您需要另外下載數據並放置到指定位置才能運作。
+## 技术栈
 
-### 必需的數據檔案
+- **前端**: Next.js 16, React 19, TypeScript, Tailwind CSS 4
+- **图表**: Lightweight Charts, Recharts
+- **后端**: Python FastAPI (独立服务)
+- **交易所**: Bitmex API (使用ccxt)
 
-#### 1. 交易數據（根目錄）
+## 快速开始
 
-以下檔案需要放置在專案根目錄：
+### 1. 安装依赖
 
-```
-PM_Platform/
-├── bitmex_executions.csv      # 成交執行記錄（必需）
-├── bitmex_trades.csv          # 交易記錄
-├── bitmex_orders.csv          # 訂單歷史
-├── bitmex_wallet_history.csv  # 錢包歷史（資金費率、存取款）
-└── bitmex_account_summary.json # 帳戶摘要
-```
-
-#### 2. K 線數據（data/ohlcv 目錄）
-
-以下檔案需要放置在 `data/ohlcv/` 目錄：
-
-```
-PM_Platform/
-└── data/
-    └── ohlcv/
-        ├── XBTUSD_1m.csv      # BTC 1分鐘 K 線
-        ├── XBTUSD_5m.csv      # BTC 5分鐘 K 線
-        ├── XBTUSD_1h.csv      # BTC 1小時 K 線
-        ├── XBTUSD_1d.csv      # BTC 日線
-        ├── ETHUSD_1m.csv      # ETH 1分鐘 K 線
-        ├── ETHUSD_5m.csv      # ETH 5分鐘 K 線
-        ├── ETHUSD_1h.csv      # ETH 1小時 K 線
-        └── ETHUSD_1d.csv      # ETH 日線
-```
-
-K 線數據 CSV 格式：
-```csv
-timestamp,open,high,low,close,volume,trades
-2020-01-01T00:00:00.000Z,7218.5,7298.5,7115,7163,1097785557,352988
-```
-
-### 數據下載方式
-
-數據檔案可從以下雲端連結下載：
-
-📦 **交易數據** (CSV 檔案，放置於根目錄)
-- 🔗 [下載連結](https://drive.google.com/file/d/11i_nJ90QpgP6Lnwalucapcsd2NbuC9co/view?usp=sharing)
-
-📊 **K 線歷史數據** (OHLCV CSV 檔案，放置於 `data/ohlcv/` 目錄)
-- 🔗 [下載連結](https://drive.google.com/file/d/1wB7SbNTXkfJA8zsu_ZN0MCRLxf4gBsGc/view?usp=sharing)
-
----
-
-## 🚀 快速開始
-
-### 環境需求
-
-- Node.js 18+
-- npm 或 yarn
-
-### 安裝步驟
-
-1. **Clone 專案**
 ```bash
-git clone https://github.com/your-username/pm-platform.git
-cd pm-platform
-```
-
-2. **安裝依賴**
-```bash
+cd frontend
 npm install
 ```
 
-3. **下載並放置數據檔案**
+### 2. 启动后端服务
 
 ```bash
-# 下載交易數據後解壓縮到根目錄
-# 應該會有以下檔案：
-# - bitmex_executions.csv
-# - bitmex_trades.csv
-# - bitmex_orders.csv
-# - bitmex_wallet_history.csv
-# - bitmex_account_summary.json
-
-# 下載 K 線數據後解壓縮到 data/ohlcv/ 目錄
-mkdir -p data/ohlcv
-# 將 OHLCV CSV 檔案放入 data/ohlcv/
+cd ../backend
+pip install -r requirements.txt
+python main.py
+# 后端运行在 http://localhost:8000
 ```
 
-4. **啟動開發伺服器**
+### 3. 启动前端
+
 ```bash
+cd ../frontend
 npm run dev
+# 前端运行在 http://localhost:3000
 ```
 
-5. **開啟瀏覽器**
+### 4. 配置环境变量 (可选)
 
-訪問 [http://localhost:3000](http://localhost:3000)
-
----
-
-## 📜 數據抓取腳本
-
-如果您有 BitMEX API 權限，可以使用以下腳本自行抓取數據：
-
-### `scripts/export_all_data.js`
-
-此腳本會從 BitMEX API 抓取以下數據：
-
-- ✅ 成交執行記錄 (Executions)
-- ✅ 交易記錄 (Trades)
-- ✅ 訂單歷史 (Orders)
-- ✅ 錢包歷史 (Wallet History)
-- ✅ 帳戶摘要 (Account Summary)
-
-**使用方式：**
-
-1. 編輯 `scripts/export_all_data.js`，填入您的 API Key 和 Secret：
-```javascript
-const API_KEY = 'YOUR_API_KEY';
-const API_SECRET = 'YOUR_API_SECRET';
-```
-
-2. 設定日期範圍：
-```javascript
-const START_DATE = new Date('2020-05-01');
-const END_DATE = new Date('2025-11-24');
-```
-
-3. 執行腳本：
-```bash
-node scripts/export_all_data.js
-```
-
-> ⚠️ **注意：** API Key 需要有 Read-Only 權限。腳本會自動處理 API 速率限制。
-
-### K 線數據
-
-K 線數據需要另外使用 BitMEX 公開 API 或第三方數據源獲取。建議使用：
-
-- BitMEX Trade Bucketed API: `GET /api/v1/trade/bucketed`
-- CCXT 套件
-- TradingView 數據導出
-
----
-
-## 🛠️ 技術架構
-
-| 技術 | 用途 |
-|------|------|
-| **Next.js 16** | React 全端框架 |
-| **React 19** | UI 框架 |
-| **TypeScript** | 類型安全 |
-| **Tailwind CSS 4** | 樣式框架 |
-| **Lightweight Charts** | K 線圖表 |
-| **Recharts** | 統計圖表 |
-| **CCXT** | 交易所 API |
-| **Lucide React** | 圖標庫 |
-
----
-
-## 📁 專案結構
+创建 `.env.local` 文件：
 
 ```
-PM_Platform/
-├── app/                    # Next.js App Router
-│   ├── api/               # API 路由
-│   │   ├── ohlcv/        # K 線數據 API
-│   │   └── trades/       # 交易數據 API
-│   ├── page.tsx          # 主頁面
-│   └── layout.tsx        # 根佈局
-├── components/            # React 組件
-│   ├── Dashboard.tsx     # 主儀表板
-│   ├── TVChart.tsx       # K 線圖表
-│   ├── PositionSessionList.tsx  # 倉位列表
-│   ├── PositionDetail.tsx       # 倉位詳情
-│   ├── StatsOverview.tsx        # 統計概覽
-│   ├── MonthlyPnLChart.tsx      # 月度 PnL
-│   └── EquityCurve.tsx          # 權益曲線
-├── lib/                   # 工具庫
-│   ├── types.ts          # TypeScript 類型定義
-│   └── data_loader.ts    # 數據載入器
-├── data/                  # K 線數據目錄
-│   └── ohlcv/            # OHLCV CSV 檔案
-├── scripts/               # 數據抓取腳本
-│   └── export_all_data.js
-└── *.csv / *.json        # 交易數據檔案
+BACKEND_URL=http://localhost:8000
 ```
 
----
+## 项目结构
 
-## 📊 數據說明
-
-### Executions (成交執行記錄)
-
-| 欄位 | 說明 |
-|------|------|
-| execID | 執行 ID |
-| orderID | 訂單 ID |
-| symbol | 交易對 (XBTUSD, ETHUSD) |
-| side | 方向 (Buy/Sell) |
-| lastQty | 成交數量 |
-| lastPx | 成交價格 |
-| execType | 執行類型 (Trade/Funding/Settlement) |
-| execCost | 執行成本 (satoshis) |
-| execComm | 手續費 (satoshis) |
-| timestamp | 時間戳 |
-
-### Position Session (倉位週期)
-
-平台會自動將交易記錄整理成「倉位週期」，每個週期代表從開倉到平倉的完整過程：
-
-- **Long 多倉**：淨部位從 0 → 正數 → 0
-- **Short 空倉**：淨部位從 0 → 負數 → 0
-
----
-
-## 🔧 開發指令
-
-```bash
-# 開發模式
-npm run dev
-
-# 建置生產版本
-npm run build
-
-# 啟動生產伺服器
-npm run start
-
-# 程式碼檢查
-npm run lint
+```
+frontend/
+├── app/
+│   ├── api/
+│   │   ├── backend/          # 后端API代理
+│   │   │   ├── test/         # 连接测试
+│   │   │   ├── predict/      # AI预测
+│   │   │   └── profile/      # 画像分析
+│   │   ├── trades/           # 交易数据
+│   │   └── ohlcv/            # K线数据
+│   └── page.tsx
+├── components/
+│   ├── Dashboard.tsx         # 主仪表板
+│   ├── TraderRolePlay.tsx    # 扮演学习模式
+│   ├── AIPrediction.tsx      # AI预测面板
+│   ├── TraderProfile.tsx     # 交易员画像
+│   ├── TVChart.tsx           # K线图表
+│   ├── StatsOverview.tsx     # 统计概览
+│   ├── EquityCurve.tsx       # 权益曲线
+│   ├── MonthlyPnLChart.tsx   # 月度PnL
+│   └── ...
+└── lib/
+    ├── types.ts              # 类型定义
+    └── data_loader.ts        # 数据加载
 ```
 
----
+## 数据文件
 
-## 📝 License
+> **注意**: 本项目需要交易数据才能运行
+
+### 必需的数据文件
+
+#### 1. 交易数据（根目录）
+
+```
+frontend/
+├── bitmex_executions.csv      # 成交执行记录（必需）
+├── bitmex_trades.csv          # 交易记录
+├── bitmex_orders.csv          # 订单历史
+├── bitmex_wallet_history.csv  # 钱包历史
+└── bitmex_account_summary.json # 账户摘要
+```
+
+#### 2. K线数据（data/ohlcv 目录）
+
+```
+frontend/data/ohlcv/
+├── XBTUSD_1m.csv      # BTC 1分钟 K 线
+├── XBTUSD_5m.csv      # BTC 5分钟 K 线
+├── XBTUSD_1h.csv      # BTC 1小时 K 线
+├── XBTUSD_1d.csv      # BTC 日线
+├── ETHUSD_1m.csv      # ETH 1分钟 K 线
+└── ...
+```
+
+## 使用方法
+
+1. **配置API**: 点击右上角"配置API"，输入交易所只读API密钥
+2. **数据概览**: 查看整体交易统计、权益曲线、月度盈亏
+3. **扮演学习**: 在不知道答案的情况下猜测交易员的操作
+4. **AI预测**: 获取基于历史模式的下一步操作预测
+5. **交易员画像**: 深入了解交易员的风格和特点
+6. **仓位历史**: 查看每个仓位的详细信息
+
+## 安全说明
+
+- 仅使用**只读API密钥**，无法进行交易操作
+- API密钥在本地处理，不会上传到服务器
+- 所有数据传输使用HTTPS加密
+
+## 许可证
 
 MIT License
-
----
-
-## 🙏 致謝
-
-感謝交易員 **paulwei** 提供 Read-Only API 權限，讓這個學習平台得以實現。
-
-本平台記錄了 paulwei 從 2020 年 5 月至今在 BitMEX 的實盤交易紀錄，供有興趣研究交易策略的人學習參考。
-
----
-
-**⚠️ 免責聲明：本平台僅供學習和研究使用，不構成任何投資建議。加密貨幣交易具有高風險，請謹慎投資。**
-

@@ -1,9 +1,10 @@
 {
-  "name": "pm-platform",
-  "version": "0.1.0",
+  "name": "trader-roleplay-analyzer",
+  "version": "1.0.0",
   "private": true,
+  "description": "交易员扮演法分析工具 - 通过扮演优秀交易员来学习交易",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 3000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
